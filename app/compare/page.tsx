@@ -1,0 +1,3 @@
+import { PackageCard } from "@/components/package-card";
+import { runMockSearch } from "@/lib/services/search-service";
+export default function ComparePage(){const result=runMockSearch({origin:"Baku",destination:"Istanbul",departureDate:"2026-06-15",returnDate:"2026-06-21",passengers:2,budget:1800,travelType:"family",hotelPreference:"4-star",transferPreference:"private"});return <main className="mx-auto max-w-7xl px-4 py-12"><h1 className="text-4xl font-black text-navy">Package comparison</h1><p className="mt-3 text-slate-600">Side-by-side packages ranked by AI score, total cost, comfort, and flexibility.</p><div className="mt-8 grid gap-6 lg:grid-cols-2">{result.packages.slice(0,4).map(p=><PackageCard key={p.id} travelPackage={p}/>)}</div></main>}
