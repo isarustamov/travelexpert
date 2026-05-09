@@ -1,0 +1,55 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+
+enum UserRole { USER ADMIN AGENCY }
+enum TravelType { cheap balanced premium family business romantic student }
+enum ProviderType { FLIGHT HOTEL TRANSFER INSURANCE VISA WEATHER CURRENCY }
+enum SubscriptionTier { FREE PREMIUM AGENCY }
+
+model User {
+  id String @id @default(cuid())
+  email String @unique
+  name String?
+  role UserRole @default(USER)
+  searches SearchQuery[]
+  savedTrips SavedTrip[]
+  priceAlerts PriceAlert[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AdminUser { id String @id @default(cuid()) userId String @unique permissions Json createdAt DateTime @default(now()) }
+
+model SearchQuery {
+  id String @id @default(cuid())
+  userId String?
+  user User? @relation(fields: [userId], references: [id])
+  origin String
+  destination String
+  departureDate DateTime
+  returnDate DateTime
+  passengers Int
+  budget Decimal
+  travelType TravelType
+  hotelPreference String
+  transferPreference String
+  rawRequest Json
+  createdAt DateTime @default(now())
+  flights FlightOption[]
+  hotels HotelOption[]
+  transfers TransferOption[]
+  packages TravelPackage[]
+}
+
+model FlightOption { id String @id @default(cuid()) searchQueryId String searchQuery SearchQuery @relation(fields: [searchQueryId], references: [id]) providerId String? airline String departureTime DateTime arrivalTime DateTime durationMinutes Int stops Int baggageIncluded Boolean refundable Boolean price Decimal currency String @default("USD") payload Json? }
+model HotelOption { id String @id @default(cuid()) searchQueryId String searchQuery SearchQuery @relation(fields: [searchQueryId], references: [id]) providerId String? name String stars Int rating Float location String amenities Json cancellationPolicy String breakfastIncluded Boolean pricePerNight Decimal totalPrice Decimal payload Json? }
+model TransferOption { id String @id @default(cuid()) searchQueryId String searchQuery SearchQuery @relation(fields: [searchQueryId], references: [id]) providerId String? type String name String price Decimal durationMinutes Int comfortScore Int availability String luggageSuitability String payload Json? }
+
+model TravelPackage { id String @id @default(cuid()) searchQueryId String searchQuery SearchQuery @relation(fields: [searchQueryId], references: [id]) flightOptionId String hotelOptionId String transferOptionId String label String score Int totalCost Decimal costBreakdown Json pros Json cons Json createdAt DateTime @default(now()) savedTrips SavedTrip[] bookingClicks BookingClick[] }
+model SavedTrip { id String @id @default(cuid()) userId String user User @relation(fields: [userId], references: [id]) packageId String package TravelPackage @relation(fields: [packageId], references: [id]) notes String? createdAt DateTime @default(now()) }
+model PriceAlert { id String @id @default(cuid()) userId String user User @relation(fields: [userId], references: [id]) route String targetPrice Decimal active Boolean @default(true) lastNotifiedAt DateTime? createdAt DateTime @default(now()) }
+model Destination { id String @id @default(cuid()) slug String @unique name String country String visaSummary String? bestTimeToVisit String? guideContent Json? seoTitle String? seoDescription String? published Boolean @default(false) updatedAt DateTime @updatedAt }
+model AffiliateProvider { id String @id @default(cuid()) name String @unique type ProviderType baseUrl String? apiKeyRef String? commissionRate Decimal? active Boolean @default(true) settings Json? bookingClicks BookingClick[] }
+model BookingClick { id String @id @default(cuid()) providerId String provider AffiliateProvider @relation(fields: [providerId], references: [id]) packageId String? package TravelPackage? @relation(fields: [packageId], references: [id]) userId String? clickUrl String metadata Json? createdAt DateTime @default(now()) }
+model BlogPost { id String @id @default(cuid()) slug String @unique title String excerpt String content String category String tags String[] published Boolean @default(false) createdAt DateTime @default(now()) updatedAt DateTime @updatedAt }
+model SubscriptionPlan { id String @id @default(cuid()) tier SubscriptionTier name String price Decimal currency String @default("USD") features Json active Boolean @default(true) }

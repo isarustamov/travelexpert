@@ -1,0 +1,17 @@
+import { PackageCard } from "@/components/package-card";
+import { PriceBreakdown } from "@/components/price-breakdown";
+import { SearchForm } from "@/components/search-form";
+import { money, minutes } from "@/lib/format";
+import { runMockSearch } from "@/lib/services/search-service";
+import { searchSchema } from "@/lib/validation";
+import { Sparkles } from "lucide-react";
+
+export default function SearchPage({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
+  const defaults = { origin: "Baku", destination: "Istanbul", departureDate: "2026-06-15", returnDate: "2026-06-21", passengers: 2, budget: 1800, travelType: "balanced", hotelPreference: "4-star", transferPreference: "taxi" };
+  const parsed = searchSchema.parse({ ...defaults, ...Object.fromEntries(Object.entries(searchParams).map(([k,v]) => [k, Array.isArray(v) ? v[0] : v])) });
+  const result = runMockSearch(parsed);
+  const best = result.packages.toSorted((a,b)=>b.score-a.score)[0];
+  return <main className="bg-slate-50"><section className="premium-gradient px-4 py-10 sm:px-6 lg:px-8"><div className="mx-auto max-w-7xl"><h1 className="text-4xl font-black text-navy">Search results for {parsed.origin} → {parsed.destination}</h1><p className="mt-2 text-slate-600">{parsed.departureDate} to {parsed.returnDate} · {parsed.passengers} passengers · {money(parsed.budget)} budget</p><div className="mt-6"><SearchForm compact /></div></div></section>
+    <section className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 lg:grid-cols-[280px_1fr] lg:px-8"><aside className="h-fit rounded-[2rem] border bg-white p-6 shadow-sm"><h2 className="font-bold text-navy">Filters</h2>{["Price", "Duration", "Baggage", "Stops", "Hotel stars", "Free cancellation", "Transfer comfort"].map(f=><label key={f} className="mt-4 flex items-center gap-2 text-sm text-slate-600"><input type="checkbox"/> {f}</label>)}</aside><div className="space-y-6"><div className="rounded-[2rem] border border-ocean/20 bg-white p-6 shadow-premium"><p className="flex items-center gap-2 font-bold text-ocean"><Sparkles/> AI recommendation</p><p className="mt-3 text-slate-700">{result.aiRecommendation}</p><div className="mt-3 flex flex-wrap gap-2">{result.riskNotes.map(n=><span key={n} className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">{n}</span>)}</div></div><div className="flex flex-wrap gap-2">{["Packages", "Flights", "Hotels", "Transfers"].map(t=><button key={t} className="rounded-full bg-white px-5 py-2 text-sm font-bold text-navy shadow-sm">{t}</button>)}</div>{result.packages.map(p=><PackageCard key={p.id} travelPackage={p}/>)}</div></section>
+    <section className="mx-auto grid max-w-7xl gap-8 px-4 pb-16 sm:px-6 lg:grid-cols-3 lg:px-8"><PriceBreakdown travelPackage={best}/><div className="rounded-[2rem] border bg-white p-6 shadow-premium lg:col-span-2"><h3 className="text-xl font-bold text-navy">Provider data preview</h3><div className="mt-4 grid gap-4 md:grid-cols-3"><div><b>Flights</b>{result.flights.map(f=><p key={f.id} className="mt-2 text-sm">{f.airline}: {money(f.price)} · {minutes(f.durationMinutes)}</p>)}</div><div><b>Hotels</b>{result.hotels.map(h=><p key={h.id} className="mt-2 text-sm">{h.name}: {money(h.totalPrice)} · {h.stars}★</p>)}</div><div><b>Transfers</b>{result.transfers.map(t=><p key={t.id} className="mt-2 text-sm">{t.name}: {money(t.price)}</p>)}</div></div></div></section></main>;
+}
