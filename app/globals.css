@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: light; }
+html { scroll-behavior: smooth; }
+body { @apply bg-white text-slate-900 antialiased; }
+
+.premium-gradient { background: radial-gradient(circle at top left, rgba(14,107,168,.16), transparent 35%), linear-gradient(135deg, #ffffff 0%, #eaf6ff 48%, #d9fff5 100%); }
+.glass-card { @apply border border-white/70 bg-white/85 shadow-premium backdrop-blur; }
+.focus-ring { @apply focus:outline-none focus:ring-4 focus:ring-ocean/20 focus:border-ocean; }
